@@ -1,3 +1,7 @@
+/* 
+TODO: Show file sizes
+*/
+
 #include <stdio.h>
 #include <stdlib.h> 
 #include <stdbool.h> 
@@ -17,13 +21,15 @@ typedef struct {
 typedef struct {
     bool recursive;
     bool count_hidden_files;
+    verbosity_t verbosity;
 } dirstats_config_t;
 
 static const struct option long_options[] = {
-    { "recursive", no_argument, NULL, 'r' },
-    { "all",       no_argument, NULL, 'a' },
-    { "help",      no_argument, NULL, 'h' },
-    { NULL,        0,           NULL,  0  } 
+    { "recursive", no_argument,       NULL, 'r' },
+    { "all",       no_argument,       NULL, 'a' },
+    { "verbose",   optional_argument, NULL, 'V' },
+    { "help",      no_argument,       NULL, 'h' },
+    { NULL,        0,                 NULL,  0  } 
 };
 
 static dirstats_config_t config;
@@ -36,12 +42,15 @@ void usage(int status)
         exit(status);
 }
 
-static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *config) 
+static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *config, char **error_path) 
 {
+    *error_path = NULL;
+
     DIR *dir = opendir(dirpath);
 
     if (dir == NULL) 
     {
+        *error_path = strdup(dirpath);
         return false;
     }
 
@@ -75,16 +84,29 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
             if (config != NULL && config->recursive)
             {
                 dirstats_t stats;
-                char *newpath = strcat_malloc(dirpath, "/", dirent->d_name, NULL);
 
-                if (newpath == NULL)
+                char *newpath = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
+                
+                strcpy(newpath, dirpath);
+                strcat(newpath, "/");
+                strcat(newpath, dirent->d_name);
+
+                newpath[strlen(dirpath) + strlen(dirent->d_name) + 1] = '\0';
+
+                LOG_DEBUG_1(config->verbosity, "reading directory: %s\n", newpath);           
+
+                if (newpath == NULL) {                    
                     return false;
+                }
 
-                if (!get_dirstats(dirent->d_name, &stats, config)) 
+                if (!get_dirstats(newpath, &stats, config, error_path)) 
                 {
+                    LOG_DEBUG_3(config->verbosity, "ERROR reading directory: %s\n", newpath);
                     free(newpath);
                     return false;
                 }
+
+                LOG_DEBUG_2(config->verbosity, "successfully read directory: %s\n", newpath);           
 
                 free(newpath);
 
@@ -99,6 +121,8 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
 
         childcount++;
     }
+
+    closedir(dir);
 
     destptr->childcount = childcount;
     destptr->filecount = filecount;
@@ -131,10 +155,12 @@ int main(int argc, char **argv)
 {
     PROGRAM_NAME = argv[0];
 
+    config.verbosity = 0;
+    
     while (true) 
     {
         int option_index;
-        int c = getopt_long(argc, argv, "hra", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hraV", long_options, &option_index);
 
         if (c == -1)
             break;
@@ -153,6 +179,16 @@ int main(int argc, char **argv)
                 config.count_hidden_files = true;
             break;
 
+            case 'V':
+                config.verbosity = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
+
+                if (config.verbosity < 0 || config.verbosity > 3) {
+                    print_error(false, true, "invalid verbosity level provided");
+                }
+
+                printf("WARNING: Verbose mode was enabled (Level %d)\n", config.verbosity);
+            break;
+
             case '?':
                 exit(-1);
 
@@ -161,23 +197,39 @@ int main(int argc, char **argv)
         }
     }
 
-    dirstats_t stats;
+    dirstats_t stats = { 0, 0, 0, 0, 0 };
 
     char *dirpath = ".";
+    bool allocated = false;
+    char *error_path = NULL;
 
-    for (int i = 1; i < argc; i++)
+    for (int i = optind; i < argc; i++)
     {
-        if (argv[i][0] != '-')
-        {
-            dirpath = argv[i];
-            break;
-        }
+        dirpath = strdup(argv[i]);
+        allocated = true;
+        break;
     }
-    
-    if (!get_dirstats(dirpath, &stats, &config))
+
+    LOG_DEBUG_1(config.verbosity, "reading directory: %s\n", dirpath);           
+
+    if (!get_dirstats(dirpath, &stats, &config, &error_path))
     {
-        print_error(true, "cannot open `%s'", dirpath);
+        LOG_DEBUG_3(config.verbosity, "ERROR reading directory: %s\n", dirpath); 
+        print_error(true, false, "cannot open `%s'", error_path);
+
+        if (allocated)
+            free(dirpath);
+
+        if (error_path != NULL)
+            free(error_path);
+        
+        exit(EXIT_FAILURE);
     }
+
+    LOG_DEBUG_2(config.verbosity, "successfully read directory: %s\n", dirpath); 
+
+    if (allocated)
+        free(dirpath);
 
     print_dirstats(&stats);
 
