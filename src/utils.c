@@ -18,14 +18,14 @@ void print_error(bool str_error, bool _exit, const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
 
-    printf("%s: ", PROGRAM_NAME);
-    vprintf(fmt, args);
+    fprintf(stderr, "%s: ", PROGRAM_NAME);
+    vfprintf(stderr, fmt, args);
 
     if (str_error) {
-        printf(": %s", strerror(errno));
+        fprintf(stderr, ": %s", strerror(errno));
     }
 
-    printf("\n");
+    fprintf(stderr, "\n");
 
     va_end(args);
 
