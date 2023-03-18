@@ -22,6 +22,7 @@ typedef struct {
 static const struct option long_options[] = {
     { "recursive", no_argument, NULL, 'r' },
     { "all",       no_argument, NULL, 'a' },
+    { "help",      no_argument, NULL, 'h' },
     { NULL,        0,           NULL,  0  } 
 };
 
@@ -133,13 +134,17 @@ int main(int argc, char **argv)
     while (true) 
     {
         int option_index;
-        int c = getopt_long(argc, argv, "ra", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hra", long_options, &option_index);
 
         if (c == -1)
             break;
 
         switch (c)
         {
+            case 'h':
+                usage(0);
+                exit(0);
+
             case 'r':
                 config.recursive = true;
             break;
@@ -157,10 +162,21 @@ int main(int argc, char **argv)
     }
 
     dirstats_t stats;
-    
-    if (!get_dirstats(".", &stats, &config))
+
+    char *dirpath = ".";
+
+    for (int i = 1; i < argc; i++)
     {
-        print_error(true, "cannot open directory");
+        if (argv[i][0] != '-')
+        {
+            dirpath = argv[i];
+            break;
+        }
+    }
+    
+    if (!get_dirstats(dirpath, &stats, &config))
+    {
+        print_error(true, "cannot open `%s'", dirpath);
     }
 
     print_dirstats(&stats);
