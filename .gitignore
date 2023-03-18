@@ -1,0 +1,5 @@
+*.exe
+/dirstats
+/.vscode
+*.o
+*.stackdump
