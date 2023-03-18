@@ -11,16 +11,21 @@ typedef struct {
     int dircount;
     int linkcount;
     int childcount;
+    int hiddencount;
 } dirstats_t;
 
 typedef struct {
     bool recursive;
+    bool count_hidden_files;
 } dirstats_config_t;
 
 static const struct option long_options[] = {
     { "recursive", no_argument, NULL, 'r' },
+    { "all",       no_argument, NULL, 'a' },
     { NULL,        0,           NULL,  0  } 
 };
+
+static dirstats_config_t config;
 
 void usage(int status) 
 {
@@ -39,13 +44,26 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
         return false;
     }
 
-    int childcount = 0, filecount = 0, dircount = 0, linkcount = 0;
+    int childcount = 0, 
+        filecount = 0, 
+        dircount = 0, 
+        linkcount = 0, 
+        hiddencount = 0;
+    
     struct dirent *dirent;
 
     while ((dirent = readdir(dir)) != NULL) 
     {
         if (STREQ(dirent->d_name, ".") || STREQ(dirent->d_name, "..")) 
             continue;
+
+        if (dirent->d_name[0] == '.')
+        {
+            hiddencount++;
+
+            if (config == NULL || !config->count_hidden_files)
+                continue;
+        }
 
         if (dirent->d_type == DT_REG)
             filecount++;
@@ -61,7 +79,8 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
                 if (newpath == NULL)
                     return false;
 
-                if (!get_dirstats(dirent->d_name, &stats, config)) {
+                if (!get_dirstats(dirent->d_name, &stats, config)) 
+                {
                     free(newpath);
                     return false;
                 }
@@ -84,6 +103,7 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
     destptr->filecount = filecount;
     destptr->dircount = dircount;
     destptr->linkcount = linkcount;
+    destptr->hiddencount = hiddencount;
 
     return true;
 }
@@ -91,23 +111,29 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
 static void print_dirstats(dirstats_t *stats)
 {
     printf(
-        COLOR("32", "%d") " files, " 
-        COLOR("33", "%d") " directories, " 
-        COLOR("34", "%d") " links and " 
-        COLOR("1", "%d") " total.\n", stats->filecount, 
-        stats->dircount, stats->linkcount, stats->childcount);
+        COLOR("32", "%d") " file%s, " 
+        COLOR("33", "%d") " director%s, " 
+        COLOR("34", "%d") " link%s and " 
+        COLOR("36", "%d") " total.", stats->filecount, stats->filecount != 1 ? "s" : "",  
+        stats->dircount, stats->dircount != 1 ? "ies" : "y", stats->linkcount,
+        stats->linkcount != 1 ? "s" : "", stats->childcount);
+
+    if (config.count_hidden_files) 
+    {
+        printf(" (Counting " COLOR("1", "%d") " hidden files)", stats->hiddencount);
+    }
+
+    printf("\n");
 }
 
 int main(int argc, char **argv)
 {
     PROGRAM_NAME = argv[0];
 
-    dirstats_config_t config = { 0 };
-
     while (true) 
     {
         int option_index;
-        int c = getopt_long(argc, argv, "r", long_options, &option_index);
+        int c = getopt_long(argc, argv, "ra", long_options, &option_index);
 
         if (c == -1)
             break;
@@ -116,6 +142,10 @@ int main(int argc, char **argv)
         {
             case 'r':
                 config.recursive = true;
+            break;
+
+            case 'a':
+                config.count_hidden_files = true;
             break;
 
             case '?':
