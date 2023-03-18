@@ -28,21 +28,45 @@ static const struct option long_options[] = {
     { "recursive", no_argument,       NULL, 'r' },
     { "all",       no_argument,       NULL, 'a' },
     { "verbose",   optional_argument, NULL, 'V' },
+    { "version",   no_argument,       NULL, 'v' },
     { "help",      no_argument,       NULL, 'h' },
     { NULL,        0,                 NULL,  0  } 
 };
 
 static dirstats_config_t config;
 
-void usage(int status) 
+static void usage(int status) 
 {
-    fprintf(stdout, "Usage: %s [OPTION]... [DIRECTORY]\n", PROGRAM_NAME);
+    fprintf(stdout, "Usage: %s [OPTION]... [DIRECTORY]\n\
+Show statistical information about the DIRECTORY. \
+The current directory is the default.\n\n\
+Options:\n\
+  -a, --all                  Do not ignore hidden files/directories\n\
+                              (files/directories starting with `.').\n\
+  -h, --help                 Show this help and exit.\n\
+  -r, --recursive            Recursively count files/directories and\n\
+                              their sizes under DIRECTORY.\n\
+  -V, --verbose=[LEVEL]      Enable verbose mode. If no LEVEL is\n\
+                              specified, LEVEL 1 gets enabled.\n\
+  -v, --version              Show the program version information.\n", PROGRAM_NAME);
 
     if (status != 0)
         exit(status);
 }
 
-static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *config, char **error_path) 
+static void show_version()
+{
+    fprintf(stdout, "%s version %s\n\
+Copyright (C) 2023 OSN Inc.\n\
+This program is licensed under GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n\
+\n\
+Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n", PROGRAM_NAME, VERSION);
+}
+
+static bool get_dirstats(char *dirpath, dirstats_t *destptr, 
+                            dirstats_config_t *config, char **error_path) 
 {
     *error_path = NULL;
 
@@ -95,9 +119,8 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *
 
                 LOG_DEBUG_1(config->verbosity, "reading directory: %s\n", newpath);           
 
-                if (newpath == NULL) {                    
+                if (newpath == NULL)               
                     return false;
-                }
 
                 if (!get_dirstats(newpath, &stats, config, error_path)) 
                 {
@@ -169,6 +192,10 @@ int main(int argc, char **argv)
         {
             case 'h':
                 usage(0);
+                exit(0);
+
+            case 'v':
+                show_version();
                 exit(0);
 
             case 'r':

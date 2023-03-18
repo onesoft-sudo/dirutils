@@ -3,6 +3,10 @@
 
 #include <stdbool.h> 
 
+#ifndef VERSION
+#define VERSION "1.0"
+#endif
+
 typedef enum {
     VERBOSITY_1 = 1,
     VERBOSITY_2,
