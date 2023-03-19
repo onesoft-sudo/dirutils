@@ -24,6 +24,8 @@
 #include <dirent.h>
 #include <getopt.h>
 
+#define HAVE_SYS_STAT_H
+
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -64,16 +66,16 @@ static dirstats_config_t config;
 
 static ssize_t get_file_size(char *filename, bool seek_back)
 {
+    size_t size;
+    
 #ifdef HAVE_SYS_STAT_H
     struct stat statresult;
 
     if (stat(filename, &statresult) != 0)
         return -1;
 
-    return statresult.st_size;
+    size = statresult.st_size;
 #else
-    size_t size;
-
     FILE *fp = fopen(filename, "r");
 
     if (fp == NULL)
@@ -88,9 +90,9 @@ static ssize_t get_file_size(char *filename, bool seek_back)
         fseek(fp, 0, SEEK_SET);
 
     fclose(fp);
+#endif
 
     return size;
-#endif
 }
 
 static void usage(int status) 
@@ -153,7 +155,9 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
             continue;
 
         if (dirent->d_type == DT_REG && config->filesize) {
-            if (dirent->d_name[0] != '.' || (dirent->d_name[0] == '.' && config != NULL && config->count_hidden_files)) {
+            if (dirent->d_name[0] != '.' || (dirent->d_name[0] == '.' && 
+                config != NULL && config->count_hidden_files)) 
+            {
                 char *newpath = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
                     
                 if (newpath == NULL) 
@@ -165,13 +169,20 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
 
                 size_t size = get_file_size(newpath, false);
 
-                free(newpath);
-
                 if (size == -1)
-                    return false;
+                {
+                    LOG_DEBUG_1(config->verbosity, "ERROR calculating size of `%s'\n", newpath);
+                    print_error(true, false, "cannot calculate size of `%s'", newpath);
+                    free(newpath);
+                    exit(EXIT_FAILURE);
+                }
 
-                printf("%d\n", size);
-
+                if (config->filesize)
+                {
+                    LOG_DEBUG_2(config->verbosity, "Size: %zu bytes: %s\n", size, newpath);
+                }
+                
+                free(newpath);
                 dirsize += size;
             }
         }
@@ -225,8 +236,6 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
                 hiddencount += dirent->d_name[0] == '.' ? stats.childcount : stats.hiddencount;
                 dirsize += stats.dirsize;
             }
-
-            dirsize += 4096;
         }
         else if (dirent->d_type == DT_LNK)
             linkcount++;
@@ -315,15 +324,16 @@ static void print_dirstats(dirstats_t *stats)
         COLOR("32", "%zu") " file%s, " 
         COLOR("33", "%zu") " director%s, " 
         COLOR("34", "%zu") " link%s and " 
-        COLOR("36", "%zu") " total (%.1lf%c).", stats->filecount, stats->filecount != 1 ? "s" : "",  
+        COLOR("36", "%zu") " total.", stats->filecount, stats->filecount != 1 ? "s" : "",  
         stats->dircount, stats->dircount != 1 ? "ies" : "y", stats->linkcount,
-        stats->linkcount != 1 ? "s" : "", stats->childcount, format.value, format.unit);
+        stats->linkcount != 1 ? "s" : "", stats->childcount);
+
+    if (config.filesize)
+        printf(" Calculated size is %.1lf%c.", format.value, format.unit);
 
     if (config.count_hidden_files) 
-    {
-        printf(" (Counting " COLOR("1", "%d") " hidden files)", stats->hiddencount);
-    }
-
+        printf(" Counting " COLOR("1", "%d") " hidden files.", stats->hiddencount);
+    
     printf("\n");
 }
 
