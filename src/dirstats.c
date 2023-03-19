@@ -22,19 +22,19 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h> 
-#include <stdbool.h> 
-#include <string.h> 
-#include <dirent.h>  
-#include <getopt.h>  
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <dirent.h>
+#include <getopt.h>
 #include "utils.h" 
 
 typedef struct {
-    int filecount;
-    int dircount;
-    int linkcount;
-    int childcount;
-    int hiddencount;
+    size_t filecount;
+    size_t dircount;
+    size_t linkcount;
+    size_t childcount;
+    size_t hiddencount;
 } dirstats_t;
 
 typedef struct {
@@ -97,7 +97,7 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
         return false;
     }
 
-    int childcount = 0, 
+    size_t childcount = 0, 
         filecount = 0, 
         dircount = 0, 
         linkcount = 0, 
@@ -156,6 +156,7 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
                 childcount += stats.childcount;
                 dircount += stats.dircount;
                 linkcount += stats.linkcount;
+                hiddencount += dirent->d_name[0] == '.' ? stats.childcount : stats.hiddencount;
             }
         }
         else if (dirent->d_type == DT_LNK)
@@ -178,10 +179,10 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
 static void print_dirstats(dirstats_t *stats)
 {
     printf(
-        COLOR("32", "%d") " file%s, " 
-        COLOR("33", "%d") " director%s, " 
-        COLOR("34", "%d") " link%s and " 
-        COLOR("36", "%d") " total.", stats->filecount, stats->filecount != 1 ? "s" : "",  
+        COLOR("32", "%zu") " file%s, " 
+        COLOR("33", "%zu") " director%s, " 
+        COLOR("34", "%zu") " link%s and " 
+        COLOR("36", "%zu") " total.", stats->filecount, stats->filecount != 1 ? "s" : "",  
         stats->dircount, stats->dircount != 1 ? "ies" : "y", stats->linkcount,
         stats->linkcount != 1 ? "s" : "", stats->childcount);
 
@@ -232,7 +233,7 @@ int main(int argc, char **argv)
                     print_error(false, true, "invalid verbosity level provided");
                 }
 
-                printf("WARNING: Verbose mode was enabled (Level %d)\n", config.verbosity);
+                printf("WARNING: verbose mode was enabled (level %d)\n", config.verbosity);
             break;
 
             case '?':
