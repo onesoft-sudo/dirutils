@@ -15,13 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
-LSDIR_OBJECTS = src/dirstats.o src/utils.o
+DIRSTATS_OBJECTS = src/dirstats.o src/utils.o
+DIRWATCH_OBJECTS = src/dirwatch.o src/utils.o 
 CC = gcc
 CFLAGS = -g
 CPPFLAGS = -DUSE_COLORS
 
-dirstats: $(LSDIR_OBJECTS)	
-	$(CC) -g $(LSDIR_OBJECTS) -o dirstats
+all: dirwatch dirstats
+
+dirstats: $(DIRSTATS_OBJECTS)	
+	$(CC) -g $(DIRSTATS_OBJECTS) -o dirstats
+
+dirwatch: $(DIRWATCH_OBJECTS)	
+	$(CC) -g $(DIRWATCH_OBJECTS) -o dirwatch
 
 clean:
-	rm -fr *.exe src/*.o
+	rm -fr *.exe dirstats src/*.o

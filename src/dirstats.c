@@ -24,8 +24,6 @@
 #include <dirent.h>
 #include <getopt.h>
 
-#define HAVE_SYS_STAT_H
-
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -339,7 +337,7 @@ static void print_dirstats(dirstats_t *stats)
 
 int main(int argc, char **argv)
 {
-    PROGRAM_NAME = argv[0];
+    set_program_name(argv[0]);
 
     config.verbosity = 0;
     
