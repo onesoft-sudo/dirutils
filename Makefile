@@ -19,7 +19,7 @@ DIRSTATS_OBJECTS = src/dirstats.o src/utils.o
 DIRWATCH_OBJECTS = src/dirwatch.o src/utils.o 
 CC = gcc
 CFLAGS = -g
-CPPFLAGS = -DUSE_COLORS
+CPPFLAGS = -DUSE_COLORS -DHAVE_SYS_INOTIFY_H -DHAVE_SYS_STAT_H
 
 all: dirwatch dirstats
 
