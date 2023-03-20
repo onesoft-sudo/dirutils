@@ -1,4 +1,4 @@
- /*
+/*
     dirstats.c -- show statistical information about directories.
     
     Copyright (C) 2023 OSN Inc.
@@ -107,7 +107,10 @@ Options:\n\
   -s, --size                 Show size of DIRECTORY.\n\
   -V, --verbose=[LEVEL]      Enable verbose mode. LEVEL 1-3 are valid.\n\
                               If no LEVEL is specified, LEVEL 1 gets enabled.\n\
-  -v, --version              Show the program version information.\n", PROGRAM_NAME);
+  -v, --version              Show the program version information.\n\
+\n\
+This program is a part of dirutils v%s.\n\
+", PROGRAM_NAME, VERSION);
 
     if (status != 0)
         exit(status);
@@ -330,7 +333,7 @@ static void print_dirstats(dirstats_t *stats)
         printf(" Calculated size is %.1lf%c.", format.value, format.unit);
 
     if (config.count_hidden_files) 
-        printf(" Counting " COLOR("1", "%d") " hidden files.", stats->hiddencount);
+        printf(" Counting " COLOR("1", "%zu") " hidden files.", stats->hiddencount);
     
     printf("\n");
 }
@@ -382,6 +385,7 @@ int main(int argc, char **argv)
             break;
 
             case '?':
+                printf("Run `%s --help' for more detailed information.\n", PROGRAM_NAME);
                 exit(-1);
 
             default:

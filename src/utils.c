@@ -1,4 +1,4 @@
- /*
+/*
     utils.c -- common utilities shared in other programs of dirutils.
     
     Copyright (C) 2023 OSN Inc.
@@ -23,13 +23,14 @@
 #include <stdbool.h>
 #include <errno.h>  
 #include <stdarg.h>
+#include <libgen.h>
 #include "utils.h"
 
 char *PROGRAM_NAME;
 
 void set_program_name(char *name) 
 {
-    PROGRAM_NAME = name;
+    PROGRAM_NAME = basename(name);
 }
 
 void print_error(bool str_error, bool _exit, const char *fmt, ...) 
