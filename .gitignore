@@ -1,6 +1,8 @@
 *.exe
 /dirstats
+/dirwatch
 /.vscode
 *.o
 *.stackdump
 /*.tar.gz
+/.gitpod.yml
