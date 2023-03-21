@@ -31,18 +31,21 @@
 
 #define EVENT_SIZE (sizeof (struct inotify_event))
 #define EVENT_BUF_LEN ((EVENT_SIZE + 16) * 1024)
+#define IN_DEFAULT (IN_CREATE | IN_MOVE | IN_DELETE | IN_MODIFY | IN_ATTRIB)
+
+typedef uint32_t mask_t;
 
 typedef struct {
     int fd;
     int wd;
-    uint32_t mask;
+    mask_t mask;
     char *dirpath;
 } config_t;
 
 static config_t config;
 
 static struct option const long_options[] = {
-    { "events",  required_argument, NULL, 'e' }, /* Experimental. There's no documentation yet and this feature is incomplete. */
+    { "events",  required_argument, NULL, 'e' },
     { "help",    no_argument,       NULL, 'h' },
     { "version", no_argument,       NULL, 'v' }
 };
@@ -85,42 +88,67 @@ static void dirwatch_init(char *dirpath)
 
     if (config.wd == -1)
         print_error(true, true, "%s: cannot watch directory", config.dirpath);
+
+    atexit(&dirwatch_cleanup);
+}
+
+static char *dirwatch_event_to_str(mask_t mask)
+{
+    char *string = NULL;
+
+    if (mask & IN_CREATE)
+        string = "CREATE";
+    else if (mask & IN_DELETE)
+        string = "DELETE";
+    else if (mask & IN_ACCESS)
+        string = "READ";
+    else if (mask & IN_MODIFY)
+        string = "MODIFIED";
+    else if (mask & IN_ATTRIB)
+        string = "ATTRCHANGE";
+    else if (mask & IN_OPEN)
+        string = "OPENED";
+    else if (mask & IN_CLOSE)
+        string = "CLOSED";
+    else if (mask & IN_MOVED_TO)
+        string = "MOVEDTO";
+    else if (mask & IN_MOVED_FROM)
+        string = "MOVEDFROM";
+    else if (mask & IN_MOVE_SELF)
+        string = "MOVEDSELF";
+    else if (mask & IN_MOVE)
+        string = "MOVED";
+    else if (mask & IN_DELETE_SELF)
+        string = "DELSELF";
+    else if (mask & IN_CLOSE_WRITE)
+        string = "CWRITE";
+    else if (mask & IN_CLOSE_NOWRITE)
+        string = "NCWRITE";
+    else
+        return NULL;
+    
+    return strdup(string);
+}
+
+static bool dirwatch_log_event(mask_t mask, char *name)
+{
+    char *eventstr = dirwatch_event_to_str(mask);
+
+    if (eventstr == NULL)
+        return false;
+
+    fprintf(stdout, COLOR("34", "%s") " %s%s\n", eventstr, name, mask & IN_ISDIR ? "/" : "");
+    free(eventstr);
+
+    return true;
 }
 
 static void dirwatch_on_event(struct inotify_event *event)
 {
     if (event->len) 
     {
-        if (event->mask & IN_CREATE)
-            printf("A new %s was created: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_DELETE)
-            printf("A %s was deleted: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_ACCESS)
-            printf("A %s was accessed: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_MODIFY)
-            printf("A %s was modified: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_ATTRIB)
-            printf("Attributes of a %s was changed: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_OPEN)
-            printf("A %s was opened: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_CLOSE)
-            printf("A %s was closed: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_MOVE)
-            printf("A %s was moved: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_MOVED_TO)
-            printf("A %s was moved to another destination from the current directory: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_MOVED_FROM)
-            printf("A %s was moved from another destination to the current directory: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_MOVE_SELF)
-            printf("The current %s was moved: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_DELETE_SELF)
-            printf("The current %s was deleted: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_CLOSE_WRITE)
-            printf("A %s was closed and written to disk: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else if (event->mask & IN_CLOSE_NOWRITE)
-            printf("A %s was closed but nothing was written to disk: %s\n", event->mask & IN_ISDIR ? "directory" : "file", event->name);
-        else
-            printf("Unknown event received: %s\n", event->name);
+        if (!dirwatch_log_event(event->mask, event->name)) 
+            print_error(true, true, "unknown event in mask");
     }
 }
 
@@ -150,6 +178,24 @@ Watches for changes in DIRECTORY. If no DIRECTORY is specified, it will watch \
 the current directory.\n\
 \n\
 Options:\n\
+  -e, --events=[EVENTS]...     Specify which events dirwatch should log.\n\
+                               Valid events are (Event name - long specifier, short specifier):\n\n\
+                               ALL EVENTS - all, 1\n\
+                               CREATE     - create, c\n\
+                               DELETE     - delete, d\n\
+                               MODIFY     - modify, m\n\
+                               READ       - read, r\n\
+                               OPEN       - open, o\n\
+                               CLOSE      - CLOSE, l\n\
+                               ATTRCHANGE - attributes, a\n\
+                               CWRITE     - cwrite, w\n\
+                               NCRWRITE   - ncwrite, f\n\
+                               MOVEDFROM  - mvfrom, v\n\
+                               MOVEDTO    - mvto, t\n\
+                               MOVE       - move, u\n\
+                               DELSELF    - delself, s\n\
+                               MVSELF     - mvself, e\n\n\
+                               Multiple events can be seperated by commas (,).\n\
   -h, --help                   Show this help and exit.\n\
   -v, --version                Show the version of this program.\n\
 \n\
@@ -182,13 +228,15 @@ static uint32_t dirwatch_parse_event_mask(char *input)
 
     while(token != NULL)
     {
-        if (STREQ(token, "create") || STREQ(token, "c"))
+        if (STREQ(token, "all") || STREQ(token, "1"))
+            return IN_ALL_EVENTS;
+        else if (STREQ(token, "create") || STREQ(token, "c"))
             mask |= IN_CREATE;
         else if (STREQ(token, "delete") || STREQ(token, "d"))
             mask |= IN_DELETE;
         else if (STREQ(token, "modify") || STREQ(token, "m"))
-            mask |= IN_MODIFY;
-        else if (STREQ(token, "access") || STREQ(token, "a"))
+            mask |= IN_DELETE;
+        else if (STREQ(token, "read") || STREQ(token, "r"))
             mask |= IN_ACCESS;
         else if (STREQ(token, "open") || STREQ(token, "o"))
             mask |= IN_OPEN;
@@ -200,7 +248,7 @@ static uint32_t dirwatch_parse_event_mask(char *input)
             mask |= IN_CLOSE_WRITE;
         else if (STREQ(token, "ncwrite") || STREQ(token, "f"))
             mask |= IN_CLOSE_NOWRITE;
-        else if (STREQ(token, "mvfrom") || STREQ(token, "r"))
+        else if (STREQ(token, "mvfrom") || STREQ(token, "v"))
             mask |= IN_MOVED_FROM;
         else if (STREQ(token, "move") || STREQ(token, "u"))
             mask |= IN_MOVE;
@@ -223,7 +271,7 @@ int main(int argc, char **argv)
 {
     set_program_name(argv[0]);
 
-    config.mask = IN_CREATE | IN_DELETE; /* Default mask. */
+    config.mask = IN_DEFAULT; /* Default mask. */
 
     while (true)
     {
@@ -272,7 +320,6 @@ int main(int argc, char **argv)
 
     dirwatch_init(dirpath);
     dirwatch_watch();
-    dirwatch_cleanup();   
 
     return 0;
 }
