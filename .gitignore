@@ -20,3 +20,4 @@ Makefile
 /src/dirstats
 /src/dirwatch
 stamp-h1
+/*.sig
