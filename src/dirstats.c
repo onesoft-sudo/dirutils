@@ -24,11 +24,11 @@
 #include <dirent.h>
 #include <getopt.h>
 
+#include "utils.h" 
+
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-#include "utils.h" 
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE

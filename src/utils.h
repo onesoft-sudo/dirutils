@@ -21,6 +21,7 @@
 #define __UTILS_H__
 
 #include <stdbool.h> 
+#include "config.h"
 
 #ifndef VERSION
 #define VERSION "0.0.1"

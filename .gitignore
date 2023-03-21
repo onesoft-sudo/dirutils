@@ -6,3 +6,17 @@
 *.stackdump
 /*.tar.gz
 /.gitpod.yml
+/build-aux
+/autom4te.cache
+/src/config.in.h
+/src/config.h
+*.in
+Makefile
+/configure
+/config.status
+/aclocal.m4
+.deps
+*.log
+/src/dirstats
+/src/dirwatch
+stamp-h1
