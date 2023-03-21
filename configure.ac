@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([dirutils], [0.0.1], [bug-dirutils@nongnu.org])
+AC_INIT([dirutils], [0.1.0], [bug-dirutils@nongnu.org])
 AM_SILENT_RULES([yes])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/dirstats.c])
