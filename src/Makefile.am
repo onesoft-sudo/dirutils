@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+AM_CFLAGS = $(COLOR_CFLAGS)
+
 bin_PROGRAMS = dirstats dirwatch
 dirstats_SOURCES = dirstats.c utils.c utils.h
 dirwatch_SOURCES = dirwatch.c utils.c utils.h
+

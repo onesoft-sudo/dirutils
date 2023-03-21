@@ -21,3 +21,4 @@ Makefile
 /src/dirwatch
 stamp-h1
 /*.sig
+*~

@@ -42,5 +42,13 @@ AC_TYPE_UINT32_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strdup strerror inotify_init])
 
+AC_MSG_CHECKING([whether to enable colorized output])
+AC_ARG_ENABLE([colors], [Enables colorized output on the terminal], [
+    AC_SUBST([COLOR_CFLAGS], [-DUSE_COLORS])
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_RESULT([no])
+])
+
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
