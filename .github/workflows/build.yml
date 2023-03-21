@@ -9,8 +9,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install autotools
+      run: sudo apt install build-essential gcc make automake autoconf
+    - name: Run autoreconf
+      run: autoreconf -i
     - name: configure
-      run: if test -e ./configure; then ./configure; fi
+      run: ./configure
     - name: make
       run: make
     - name: make check
