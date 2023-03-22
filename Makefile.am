@@ -19,3 +19,6 @@
 SUBDIRS = src
 ACLOCAL_AMFLAGS = -I m4
 dist_doc_DATA = README.md
+
+dist-hook:
+	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
