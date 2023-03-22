@@ -1,5 +1,7 @@
 2023-03-22  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	fix(dirstats.c): `-v` option not working
+
 	fix(dirstats.c):  option not working
 
 	chore: update changelog
