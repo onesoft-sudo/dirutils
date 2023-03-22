@@ -347,7 +347,7 @@ int main(int argc, char **argv)
     while (true) 
     {
         int option_index;
-        int c = getopt_long(argc, argv, "hraVs", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hraVsv", long_options, &option_index);
 
         if (c == -1)
             break;
