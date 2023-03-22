@@ -33,34 +33,40 @@
 #define EVENT_BUF_LEN ((EVENT_SIZE + 16) * 1024)
 #define IN_DEFAULT (IN_CREATE | IN_MOVE | IN_DELETE | IN_MODIFY | IN_ATTRIB)
 
-typedef uint32_t mask_t;
+typedef uint32_t mask_t; /* inotify mask type. */
 
+/* Configuration of the program. 
+   TODO: Add support of recursively watching directories. */
 typedef struct {
-    int fd;
-    int wd;
-    mask_t mask;
-    char *dirpath;
+    int fd;               /* The file descriptor provided by inotify_init(). */
+    int wd;               /* Watch descriptor for the given directory. */
+    mask_t mask;          /* Watch descriptor for the given directory. */
+    char *dirpath;        /* Path of the directory to watch. */
 } config_t;
 
+/* Event color and stringified representation. */
 typedef struct {
-    char *eventstr;
-    int colorcode;
+    char *eventstr;       /* The stringified representation of the event. */
+    int colorcode;        /* Appropriate color code for the event. */
 } event_info_t;
 
-static config_t config;
+static config_t config;   /* The main configuration variable for the whole program. */
 
+/* Command-line options. */
 static struct option const long_options[] = {
     { "events",  required_argument, NULL, 'e' },
     { "help",    no_argument,       NULL, 'h' },
     { "version", no_argument,       NULL, 'v' }
 };
 
+/* Close the file and watch descriptors. */
 static void dirwatch_cleanup()
 {
     inotify_rm_watch(config.fd, config.wd);
     close(config.fd);
 }
 
+/* In case if we receive a SIGINT signal, then print the text into STDOUT and exit. */
 static void sigint_handle()
 {
     puts("SIGINT received. Exiting.");
@@ -68,6 +74,7 @@ static void sigint_handle()
     exit(EXIT_SUCCESS);
 }
 
+/* Sets the signal handler functions. */
 static void dirwatch_set_signal_handlers()
 {
     struct sigaction action;
@@ -79,6 +86,7 @@ static void dirwatch_set_signal_handlers()
         print_error(true, true, "failed to set SIGINT handler");
 }
 
+/* Initializes the program and its resources. */
 static void dirwatch_init(char *dirpath)
 {
     dirwatch_set_signal_handlers();
@@ -89,6 +97,8 @@ static void dirwatch_init(char *dirpath)
     if (config.fd == -1)
         print_error(true, true, "cannot initialize inotify");
 
+    /* Watch for changes in this directory. Only notify for the given events
+       in the mask parameter. */
     config.wd = inotify_add_watch(config.fd, config.dirpath, config.mask);
 
     if (config.wd == -1)
@@ -97,12 +107,16 @@ static void dirwatch_init(char *dirpath)
     atexit(&dirwatch_cleanup);
 }
 
+/* Cleans up the dynamically allocated string returned by dirwatch_event_info(). */
 static bool dirwatch_free_event_info(event_info_t *info)
 {
     if (info->eventstr != NULL)
         free(info->eventstr);
 }
 
+/* Determine the event string representation for outputting into STDOUT.
+   The string is dynamically allocated using strdup(), so it should be 
+   freed when done working with it. */
 static bool dirwatch_event_info(event_info_t *info, mask_t mask)
 {
     char *string = NULL;
@@ -185,6 +199,7 @@ static bool dirwatch_event_info(event_info_t *info, mask_t mask)
     return true;
 }
 
+/* Log the given event into STDOUT. */
 static bool dirwatch_log_event(mask_t mask, char *name)
 {
     event_info_t info = { 0 };
@@ -198,6 +213,7 @@ static bool dirwatch_log_event(mask_t mask, char *name)
     return true;
 }
 
+/* Handle a change event in the given directory. */
 static void dirwatch_on_event(struct inotify_event *event)
 {
     if (event->len) 
@@ -207,6 +223,7 @@ static void dirwatch_on_event(struct inotify_event *event)
     }
 }
 
+/* Run an infinite loop to watch for the events in the given directory. */
 static void dirwatch_watch()
 {
     while (true)
@@ -226,6 +243,7 @@ static void dirwatch_watch()
     }
 }
 
+/* Prints the usage of the program. If _exit is true, then it calls exit(EXIT_SUCCESS). */
 static void usage(bool _exit)
 {
     fprintf(stdout, "Usage: %s [OPTIONS]... [DIRECTORY]\n\
@@ -261,6 +279,7 @@ This program is a part of dirutils v%s.\n\
         exit(EXIT_SUCCESS);
 }
 
+/* Prints the version of the program. If _exit is true, then it calls exit(EXIT_SUCCESS). */
 static void version(bool _exit)
 {
     fprintf(stdout, "%s version %s\n\
@@ -275,6 +294,9 @@ Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n", PROGRAM_NAME, VERSION);
         exit(EXIT_SUCCESS);
 }
 
+/* Parse the events specified by the user using the `-e` or `--events` option. Each
+   event has it's own unique short and long identifier.
+   Returns 0 if an unknown event identifier was found in the input. */
 static uint32_t dirwatch_parse_event_mask(char *input)
 {
     char *delim = ",";
@@ -322,6 +344,7 @@ static uint32_t dirwatch_parse_event_mask(char *input)
     return mask;
 }
 
+/* Start of the program and argument parsing. */ 
 int main(int argc, char **argv)
 {
     set_program_name(argv[0]);
