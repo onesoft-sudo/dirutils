@@ -1,0 +1,98 @@
+2023-03-22  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	chore: add changelog
+
+2023-03-22  Ar Rakin  <rakinar2@gmail.com>
+
+	fix(dirwatch.c): improve formatting of the output
+
+	chore: update gitignore
+
+	chore: update version
+
+	chore: update build scripts
+
+	feat(dirwatch.c): improve the events system
+
+2023-03-21  Ar Rakin  <rakinar2@gmail.com>
+
+	chore: add license comments
+
+	ci: update workflows
+
+	chore: update .gitignore
+
+	chore: change version number
+
+	build: use automake as the main build tool
+	* dirutils.c: fix include orders
+	* utils.h: include config.h header file provided by autotools
+
+	ci: update workflows
+
+	chore: delete makefile
+
+	chore: update readme
+
+	chore: update gitignore
+
+	build: update makefile
+
+	feat: add dirwatch program
+
+2023-03-20  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	fix: issues
+
+2023-03-20  Ar Rakin  <rakinar2@gmail.com>
+
+	chore: update readme
+
+2023-03-19  Ar Rakin  <rakinar2@gmail.com>
+
+	fix: issues
+
+	Merge branch 'main' of https://github.com/onesoft-sudo/dirutils
+
+	feat: show size of the given directory if -s is specified
+
+	refactor: a few new enhancements
+
+2023-03-19  Ar Rakin  <68149013+virtual-designer@users.noreply.github.com>
+
+	ci: rereate .github/workflows/codeql.yml
+
+	ci: delete codeql workflow
+
+	ci: create .github/workflows/codeql.yml workflow
+
+2023-03-19  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	chore: add license comments
+
+	feat: add --help and --version options
+
+	fix(utils.c): writing to stdout when printing an error message
+
+2023-03-18  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	feat: add verbosity options
+
+	feat: input directory support
+
+	feat: add hidden files support
+
+2023-03-18  Ar Rakin  <68149013+virtual-designer@users.noreply.github.com>
+
+	ci: rename workflow
+
+	ci: add workflows
+
+	chore: add project license
+	Use GNU GPL v3 as the project license.
+
+	feat: create readme
+
+2023-03-18  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	feat: initial commit
