@@ -1,5 +1,9 @@
 2023-03-22  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	build: ensure .tarball_version is created
+
+	chore: update changelog
+
 	style(dirwatch.c): add comments
 
 	chore: update changelog
