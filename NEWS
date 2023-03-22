@@ -1,0 +1,7 @@
+Dirutils NEWS                                    -*- outline -*-
+
+* Noteworthy changes in release ?.?.? (??-??-??) [?]
+
+** Improvements
+
+  `dirwatch` now supports colorized and pretty-formatteds output.
