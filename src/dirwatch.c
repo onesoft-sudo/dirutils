@@ -349,7 +349,7 @@ int main(int argc, char **argv)
                     uint32_t mask = dirwatch_parse_event_mask(optarg);
 
                     if (mask == 0) 
-                        print_error(false, true, "invalid events specified\nRun `%s --help' for more detailed information.", PROGRAM_NAME);
+                        print_error(false, true, "invalid events specified.\nRun `%s --help' for more detailed information.", PROGRAM_NAME);
 
                     config.mask = mask;
                 }
