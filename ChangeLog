@@ -1,5 +1,9 @@
 2023-03-22  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	fix(dirstats.c):  option not working
+
+	chore: update changelog
+
 	chore: add AUTHORS file
 
 	chore: update changelog
