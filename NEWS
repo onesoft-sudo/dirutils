@@ -2,6 +2,10 @@ Dirutils NEWS                                    -*- outline -*-
 
 * Noteworthy changes in release ?.?.? (??-??-??) [?]
 
+** Bug fixes
+
+  fixed `dirstats -v` not working.
+
 ** Improvements
 
   `dirwatch` now supports colorized and pretty-formatteds output.

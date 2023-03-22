@@ -17,7 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ([2.71])
-AC_INIT([dirutils], [0.2.0], [bug-dirutils@nongnu.org])
+AC_INIT([dirutils], [0.3.0], [bug-dirutils@nongnu.org])
 AM_SILENT_RULES([yes])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/dirstats.c])
