@@ -42,6 +42,11 @@ typedef struct {
     char *dirpath;
 } config_t;
 
+typedef struct {
+    char *eventstr;
+    int colorcode;
+} event_info_t;
+
 static config_t config;
 
 static struct option const long_options[] = {
@@ -92,53 +97,103 @@ static void dirwatch_init(char *dirpath)
     atexit(&dirwatch_cleanup);
 }
 
-static char *dirwatch_event_to_str(mask_t mask)
+static bool dirwatch_free_event_info(event_info_t *info)
+{
+    if (info->eventstr != NULL)
+        free(info->eventstr);
+}
+
+static bool dirwatch_event_info(event_info_t *info, mask_t mask)
 {
     char *string = NULL;
 
     if (mask & IN_CREATE)
-        string = "CREATE";
+    {
+        string = "CREATE    ";
+        info->colorcode = 32;
+    }
     else if (mask & IN_DELETE)
-        string = "DELETE";
+    {
+        string = "DELETE    ";
+        info->colorcode = 31;
+    }
     else if (mask & IN_ACCESS)
-        string = "READ";
+    {
+        string = "READ      ";
+        info->colorcode = 34;
+    }
     else if (mask & IN_MODIFY)
-        string = "MODIFIED";
+    {
+        string = "MODIFIED  ";
+        info->colorcode = 33;
+    }
     else if (mask & IN_ATTRIB)
+    {
         string = "ATTRCHANGE";
+        info->colorcode = 33;
+    }
     else if (mask & IN_OPEN)
-        string = "OPENED";
+    {
+        string = "OPENED    ";
+        info->colorcode = 34;
+    }
     else if (mask & IN_CLOSE)
-        string = "CLOSED";
+    {
+        string = "CLOSED    ";
+        info->colorcode = 34;
+    }
     else if (mask & IN_MOVED_TO)
-        string = "MOVEDTO";
+    {
+        string = "MOVEDTO   ";
+        info->colorcode = 33;
+    }
     else if (mask & IN_MOVED_FROM)
-        string = "MOVEDFROM";
+    {
+        string = "MOVEDFROM ";
+        info->colorcode = 33;
+    }
     else if (mask & IN_MOVE_SELF)
-        string = "MOVEDSELF";
+    {
+        string = "MOVEDSELF ";
+        info->colorcode = 33;
+    }
     else if (mask & IN_MOVE)
-        string = "MOVED";
+    {
+        string = "MOVED     ";
+        info->colorcode = 33;
+    }
     else if (mask & IN_DELETE_SELF)
-        string = "DELSELF";
+    {
+        string = "DELSELF   ";
+        info->colorcode = 31;
+    }
     else if (mask & IN_CLOSE_WRITE)
-        string = "CWRITE";
+    {
+        string = "CWRITE    ";
+        info->colorcode = 32;
+    }
     else if (mask & IN_CLOSE_NOWRITE)
-        string = "NCWRITE";
+    {
+        string = "NCWRITE   ";
+        info->colorcode = 31;
+    }
     else
-        return NULL;
+        return false;
     
-    return strdup(string);
+    info->eventstr = strdup(string);
+
+    return true;
 }
 
 static bool dirwatch_log_event(mask_t mask, char *name)
 {
-    char *eventstr = dirwatch_event_to_str(mask);
+    event_info_t info = { 0 };
 
-    if (eventstr == NULL)
+    if (!dirwatch_event_info(&info, mask))
         return false;
 
-    fprintf(stdout, COLOR("34", "%s") " %s%s\n", eventstr, name, mask & IN_ISDIR ? "/" : "");
-    free(eventstr);
+    fprintf(stdout, COLOR("1;%d", "%s") " %s%s\n", info.colorcode, info.eventstr, name, mask & IN_ISDIR ? "/" : "");
+    dirwatch_free_event_info(&info);
 
     return true;
 }
