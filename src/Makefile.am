@@ -20,5 +20,5 @@ AM_CFLAGS = $(COLOR_CFLAGS)
 
 bin_PROGRAMS = dirstats dirwatch
 dirstats_SOURCES = dirstats.c utils.c utils.h
-dirwatch_SOURCES = dirwatch.c utils.c utils.h
+dirwatch_SOURCES = dirwatch.c utils.c dirmap.c utils.h dirmap.h
 
