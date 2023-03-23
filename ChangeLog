@@ -1,5 +1,9 @@
 2023-03-23  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	chore: prepare project for new release
+
+	chore: update changelog
+
 	feat(dirwatch.c): recursively set inotify watchers
 
 	chore: update changelog
