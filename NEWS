@@ -1,7 +1,7 @@
 Dirutils NEWS                                    -*- outline -*-
 
-* Noteworthy changes in release ?.?.? (????-??-??) [?]
-  
+* Noteworthy changes in release 0.4.0 (2023-03-24) [unstable]
+
 ** New features
 
   now it is possible to set an inotify watcher recursively in `dirwatch`. 
