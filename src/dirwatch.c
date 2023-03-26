@@ -17,72 +17,80 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <assert.h>
 #include <dirent.h>
-#include <signal.h>
-#include <string.h>
+#include <errno.h>
 #include <getopt.h>
+#include <signal.h>
 #include <stdbool.h>
-#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/inotify.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "utils.h"
 #include "dirmap.h"
+#include "utils.h"
 
 #define INOTIFY_MAX_USER_WATCHES_FILE "/proc/sys/fs/inotify/max_user_watches"
-#define EVENT_SIZE (sizeof (struct inotify_event))
+#define EVENT_SIZE (sizeof(struct inotify_event))
 #define EVENT_BUF_LEN ((EVENT_SIZE + 16) * 1024)
 #define IN_DEFAULT (IN_CREATE | IN_MOVE | IN_DELETE | IN_MODIFY | IN_ATTRIB)
 
 typedef uint32_t mask_t; /* inotify mask type. */
 
-/* Configuration of the program. 
+/* Configuration of the program.
    TODO: Add support of recursively watching directories. */
-typedef struct {
-    int fd;                 /* The file descriptor provided by inotify_init(). */
-    int wd;                 /* Watch descriptor for the given directory. */
-    mask_t mask;            /* Watch descriptor for the given directory. */
-    char *dirpath;          /* Path of the directory to watch. */
-    int watchcount;         /* Count of the watchers in total. */
-    int max_watches;        /* Max count of the watchers in total. */
-    bool recursive;         /* Flag set by options. */
-    verbosity_t verbosity;  /* Verbosity level set by options. */
+typedef struct
+{
+    int fd;          /* The file descriptor provided by inotify_init(). */
+    int wd;          /* Watch descriptor for the given directory. */
+    mask_t mask;     /* Watch descriptor for the given directory. */
+    char *dirpath;   /* Path of the directory to watch. */
+    int watchcount;  /* Count of the watchers in total. */
+    int max_watches; /* Max count of the watchers in total. */
+    bool recursive;  /* Flag set by options. */
+    verbosity_t verbosity; /* Verbosity level set by options. */
 } config_t;
 
 /* Event color and stringified representation. */
-typedef struct {
-    char *eventstr;       /* The stringified representation of the event. */
-    int colorcode;        /* Appropriate color code for the event. */
+typedef struct
+{
+    char *eventstr; /* The stringified representation of the event. */
+    int colorcode;  /* Appropriate color code for the event. */
 } event_info_t;
 
-static config_t config;   /* The main configuration variable for the whole program. */
+/* The main configuration variable for the whole program. */
+static config_t config;
+
+/* Directory list map. */
 static dirmap_t dirmap = DIRMAP_INIT;
 
 /* Command-line options. */
 static struct option const long_options[] = {
-    { "events",    required_argument, NULL, 'e' },
-    { "help",      no_argument,       NULL, 'h' },
-    { "recursive", no_argument,       NULL, 'r' },
-    { "verbose",   optional_argument, NULL, 'V' },
-    { "version",   no_argument,       NULL, 'v' }
+    {"events",     required_argument, NULL, 'e'},
+    { "help",      no_argument,       NULL, 'h'},
+    { "recursive", no_argument,       NULL, 'r'},
+    { "verbose",   optional_argument, NULL, 'V'},
+    { "version",   no_argument,       NULL, 'v'}
 };
 
 /* Close the file and watch descriptors. */
-static void dirwatch_cleanup()
+static void
+dirwatch_cleanup()
 {
     if (config.wd)
         inotify_rm_watch(config.fd, config.wd);
-    
+
     dirmap_free(&dirmap);
     close(config.fd);
 }
 
-/* In case if we receive a SIGINT signal, then print the text into STDOUT and exit. */
-static void sigint_handle()
+/* In case if we receive a SIGINT signal, then print the text into STDOUT and
+   exit. */
+static void
+sigint_handle()
 {
     puts("SIGINT received. Exiting.");
     dirwatch_cleanup();
@@ -90,18 +98,20 @@ static void sigint_handle()
 }
 
 /* Sets the signal handler functions. */
-static void dirwatch_set_signal_handlers()
+static void
+dirwatch_set_signal_handlers()
 {
     struct sigaction action;
 
     action.sa_handler = sigint_handle;
     action.sa_flags = 0;
 
-    if (sigaction(SIGINT, &action, NULL) == -1) 
+    if (sigaction(SIGINT, &action, NULL) == -1)
         print_error(true, true, "failed to set SIGINT handler");
 }
 
-static int dirwatch_get_max_watches()
+static int
+dirwatch_get_max_watches()
 {
     FILE *fp = fopen(INOTIFY_MAX_USER_WATCHES_FILE, "r");
 
@@ -116,7 +126,8 @@ static int dirwatch_get_max_watches()
     return max_watches;
 }
 
-static bool dirwatch_add_watches_recursive(char *dirpath)
+static bool
+dirwatch_add_watches_recursive(char *dirpath)
 {
     assert(dirpath);
 
@@ -129,10 +140,11 @@ static bool dirwatch_add_watches_recursive(char *dirpath)
 
     while ((entry = readdir(dir)) != NULL)
     {
-        if (config.watchcount >= config.max_watches) 
+        if (config.watchcount >= config.max_watches)
         {
             closedir(dir);
-            errno = ENOBUFS; /* Set error in case if the max limit was reached. */
+            errno = ENOBUFS; /* Set error in case if the max limit was
+                                reached. */
             return false;
         }
 
@@ -143,7 +155,7 @@ static bool dirwatch_add_watches_recursive(char *dirpath)
             continue;
 
         if (entry->d_type == DT_DIR)
-        {            
+        {
             size_t len = strlen(dirpath) + strlen(entry->d_name) + 1;
             char *newpath = malloc(len);
 
@@ -152,38 +164,41 @@ static bool dirwatch_add_watches_recursive(char *dirpath)
                 closedir(dir);
                 return false;
             }
-         
+
             strcpy(newpath, dirpath);
             strcat(newpath, "/");
             strcat(newpath, entry->d_name);
 
-            LOG_DEBUG_2(config.verbosity, "Attempting to watch directory: %s\n", newpath);   
-
-            // newpath[len] = '\0';
+            LOG_DEBUG_2(config.verbosity,
+                        "Attempting to watch directory: %s\n", newpath);
 
             int wd = inotify_add_watch(config.fd, newpath, config.mask);
 
             if (wd == -1)
             {
-                LOG_DEBUG_1(config.verbosity, "Failed to watch directory: %s\n", newpath);            
-                free(newpath);
-                closedir(dir);
-                return false;
-            }
-            
-            if (!dirmap_add(&dirmap, newpath, wd))
-            {
-                LOG_DEBUG_1(config.verbosity, "Failed to add watched directory to map: %s\n", newpath);            
+                LOG_DEBUG_1(config.verbosity,
+                            "Failed to watch directory: %s\n", newpath);
                 free(newpath);
                 closedir(dir);
                 return false;
             }
 
-            LOG_DEBUG_1(config.verbosity, "Watching directory: %s\n", newpath);            
+            if (!dirmap_add(&dirmap, newpath, wd))
+            {
+                LOG_DEBUG_1(config.verbosity,
+                            "Failed to add watched directory to map: %s\n",
+                            newpath);
+                free(newpath);
+                closedir(dir);
+                return false;
+            }
+
+            LOG_DEBUG_1(config.verbosity, "Watching directory: %s\n", newpath);
 
             if (!dirwatch_add_watches_recursive(newpath))
             {
-                LOG_DEBUG_1(config.verbosity, "Recursive watch failed: %s\n", newpath);     
+                LOG_DEBUG_1(config.verbosity, "Recursive watch failed: %s\n",
+                            newpath);
                 free(newpath);
                 closedir(dir);
                 return false;
@@ -199,25 +214,27 @@ static bool dirwatch_add_watches_recursive(char *dirpath)
 }
 
 /* Initializes the program and its resources. */
-static void dirwatch_init(char *dirpath)
+static void
+dirwatch_init(char *dirpath)
 {
     dirwatch_set_signal_handlers();
 
-    config.watchcount = 0;    
+    config.watchcount = 0;
     config.dirpath = dirpath;
-    
+
     int max = dirwatch_get_max_watches();
 
     if (max == -1)
         print_error(true, true, "failed to get max watch count");
-    
+
     config.max_watches = max;
     config.fd = inotify_init();
 
     if (config.fd == -1)
         print_error(true, true, "cannot initialize inotify");
 
-    LOG_DEBUG_2(config.verbosity, "Attempting to watch directory: %s\n", config.dirpath);
+    LOG_DEBUG_2(config.verbosity, "Attempting to watch directory: %s\n",
+                config.dirpath);
 
     /* Watch for changes in this directory. Only notify for the given events
         in the mask parameter. */
@@ -226,31 +243,36 @@ static void dirwatch_init(char *dirpath)
     if (config.wd == -1)
         print_error(true, true, "%s: cannot watch directory", config.dirpath);
 
-    LOG_DEBUG_1(config.verbosity, "Watching directory: %s\n", config.dirpath); 
+    LOG_DEBUG_1(config.verbosity, "Watching directory: %s\n", config.dirpath);
 
     if (config.recursive)
     {
         if (!dirmap_add(&dirmap, config.dirpath, config.wd))
-            print_error(true, true, "%s: cannot add watched directory to map", config.dirpath);
+            print_error(true, true, "%s: cannot add watched directory to map",
+                        config.dirpath);
 
-        if (!dirwatch_add_watches_recursive(config.dirpath)) 
-            print_error(true, true, "%s: cannot recursively watch directory", config.dirpath);
+        if (!dirwatch_add_watches_recursive(config.dirpath))
+            print_error(true, true, "%s: cannot recursively watch directory",
+                        config.dirpath);
     }
 
     atexit(&dirwatch_cleanup);
 }
 
-/* Cleans up the dynamically allocated string returned by dirwatch_event_info(). */
-static bool dirwatch_free_event_info(event_info_t *info)
+/* Cleans up the dynamically allocated string returned by
+   dirwatch_event_info(). */
+static bool
+dirwatch_free_event_info(event_info_t *info)
 {
     if (info->eventstr != NULL)
         free(info->eventstr);
 }
 
 /* Determine the event string representation for outputting into STDOUT.
-   The string is dynamically allocated using strdup(), so it should be 
+   The string is dynamically allocated using strdup(), so it should be
    freed when done working with it. */
-static bool dirwatch_event_info(event_info_t *info, mask_t mask)
+static bool
+dirwatch_event_info(event_info_t *info, mask_t mask)
 {
     char *string = NULL;
     size_t len = 10;
@@ -327,7 +349,7 @@ static bool dirwatch_event_info(event_info_t *info, mask_t mask)
     }
     else
         return false;
-    
+
     assert(strlen(string) == len);
     info->eventstr = strdup(string);
 
@@ -335,7 +357,8 @@ static bool dirwatch_event_info(event_info_t *info, mask_t mask)
 }
 
 /* Log the given event into STDOUT. */
-static bool dirwatch_log_event(mask_t mask, char *name, char *context_dir)
+static bool
+dirwatch_log_event(mask_t mask, char *name, char *context_dir)
 {
     assert(name);
 
@@ -344,36 +367,39 @@ static bool dirwatch_log_event(mask_t mask, char *name, char *context_dir)
     if (!dirwatch_event_info(&info, mask))
         return false;
 
-    fprintf(stdout, COLOR("1;%d", "%s") " %s%s", info.colorcode, info.eventstr, 
-        name, mask & IN_ISDIR ? "/" : " ");
+    fprintf(stdout, COLOR("1;%d", "%s") " %s%s", info.colorcode, info.eventstr,
+            name, mask & IN_ISDIR ? "/" : " ");
 
     int spaces = (dirmap.max_dirpath_len - strlen(name)) + 3;
 
     for (int i = 0; i < spaces; i++)
         putchar(' ');
 
-    fprintf(stdout, "%s%s\n", context_dir != NULL ? context_dir : "", 
-        context_dir != NULL ? "/" : "");
-    
+    fprintf(stdout, "%s%s\n", context_dir != NULL ? context_dir : "",
+            context_dir != NULL ? "/" : "");
+
     dirwatch_free_event_info(&info);
 
     return true;
 }
 
 /* Handle a change event in the given directory. */
-static void dirwatch_on_event(struct inotify_event *event)
+static void
+dirwatch_on_event(struct inotify_event *event)
 {
-    if (event->len) 
+    if (event->len)
     {
         dirmap_entry_t *entry = dirmap_find_by_wd(&dirmap, event->wd);
 
-        if (!dirwatch_log_event(event->mask, event->name, entry == NULL ? "[Nothing]" : entry->dirpath)) 
+        if (!dirwatch_log_event(event->mask, event->name,
+                                entry == NULL ? "[Nothing]" : entry->dirpath))
             print_error(true, true, "unknown event in mask");
     }
 }
 
 /* Run an infinite loop to watch for the events in the given directory. */
-static void dirwatch_watch()
+static void
+dirwatch_watch()
 {
     while (true)
     {
@@ -381,9 +407,10 @@ static void dirwatch_watch()
         int length = read(config.fd, buffer, EVENT_BUF_LEN);
 
         if (length == -1)
-            print_error(true, true, "read from inotify file descriptor failed");
+            print_error(true, true,
+                        "read from inotify file descriptor failed");
 
-        for (int i = 0; i < length;) 
+        for (int i = 0; i < length;)
         {
             struct inotify_event *event = (struct inotify_event *) &buffer[i];
             dirwatch_on_event(event);
@@ -392,8 +419,10 @@ static void dirwatch_watch()
     }
 }
 
-/* Prints the usage of the program. If _exit is true, then it calls exit(EXIT_SUCCESS). */
-static void usage(bool _exit)
+/* Prints the usage of the program. If _exit is true, then it calls
+   exit(EXIT_SUCCESS). */
+static void
+usage(bool _exit)
 {
     fprintf(stdout, "Usage: %s [OPTIONS]... [DIRECTORY]\n\
 Watches for changes in DIRECTORY. If no DIRECTORY is specified, it will watch \
@@ -426,14 +455,17 @@ Options:\n\
                                 If no LEVEL is specified, LEVEL 1 gets enabled.\n\
 \n\
 This program is a part of dirutils v%s.\n\
-", PROGRAM_NAME, VERSION);
+",
+            PROGRAM_NAME, VERSION);
 
     if (_exit)
         exit(EXIT_SUCCESS);
 }
 
-/* Prints the version of the program. If _exit is true, then it calls exit(EXIT_SUCCESS). */
-static void version(bool _exit)
+/* Prints the version of the program. If _exit is true, then it calls
+   exit(EXIT_SUCCESS). */
+static void
+version(bool _exit)
 {
     fprintf(stdout, "%s version %s\n\
 Copyright (C) 2023 OSN Inc.\n\
@@ -441,22 +473,24 @@ This program is licensed under GNU GPL version 3 or later <https://gnu.org/licen
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\
 \n\
-Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n", PROGRAM_NAME, VERSION);
+Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n",
+            PROGRAM_NAME, VERSION);
 
     if (_exit)
         exit(EXIT_SUCCESS);
 }
 
-/* Parse the events specified by the user using the `-e` or `--events` option. Each
-   event has it's own unique short and long identifier.
-   Returns 0 if an unknown event identifier was found in the input. */
-static uint32_t dirwatch_parse_event_mask(char *input)
+/* Parse the events specified by the user using the `-e` or `--events` option.
+   Each event has it's own unique short and long identifier. Returns 0 if an
+   unknown event identifier was found in the input. */
+static uint32_t
+dirwatch_parse_event_mask(char *input)
 {
     char *delim = ",";
     char *token = strtok(input, delim);
     uint32_t mask = 0;
 
-    while(token != NULL)
+    while (token != NULL)
     {
         if (STREQ(token, "all") || STREQ(token, "1"))
             return IN_ALL_EVENTS;
@@ -497,8 +531,9 @@ static uint32_t dirwatch_parse_event_mask(char *input)
     return mask;
 }
 
-/* Start of the program and argument parsing. */ 
-int main(int argc, char **argv)
+/* Start of the program and argument parsing. */
+int
+main(int argc, char **argv)
 {
     set_program_name(argv[0]);
 
@@ -515,44 +550,51 @@ int main(int argc, char **argv)
 
         switch (c)
         {
-            case 'h':
-                usage(true); /* This function will call exit() itself. */
+        case 'h':
+            usage(true); /* This function will call exit() itself. */
 
-            case 'v':
-                version(true); /* This function will call exit() itself. */
+        case 'v':
+            version(true); /* This function will call exit() itself. */
 
-            case 'e':
-                {
-                    uint32_t mask = dirwatch_parse_event_mask(optarg);
+        case 'e':
+        {
+            uint32_t mask = dirwatch_parse_event_mask(optarg);
 
-                    if (mask == 0) 
-                        print_error(false, true, "invalid events specified.\nRun `%s --help' for more detailed information.", PROGRAM_NAME);
+            if (mask == 0)
+                print_error(false, true,
+                            "invalid events specified.\nRun `%s --help' "
+                            "for more detailed information.",
+                            PROGRAM_NAME);
 
-                    config.mask = mask;
-                }
+            config.mask = mask;
+        }
+        break;
+
+        case 'V':
+            config.verbosity
+                = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
+
+            if (config.verbosity < 0 || config.verbosity > 3)
+            {
+                print_error(false, true, "invalid verbosity level provided");
+            }
+
+            printf("WARNING: verbose mode was enabled (level %d)\n",
+                   config.verbosity);
             break;
 
-            case 'V':
-                config.verbosity = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
-
-                if (config.verbosity < 0 || config.verbosity > 3) {
-                    print_error(false, true, "invalid verbosity level provided");
-                }
-
-                printf("WARNING: verbose mode was enabled (level %d)\n", config.verbosity);
+        case 'r':
+            config.recursive = true;
             break;
 
-            case 'r':
-                config.recursive = true;
-            break;
- 
-            case '?':
-                fprintf(stderr, "Run `%s --help' for more detailed information.\n", PROGRAM_NAME);
-                exit(EXIT_FAILURE);
+        case '?':
+            fprintf(stderr, "Run `%s --help' for more detailed information.\n",
+                    PROGRAM_NAME);
+            exit(EXIT_FAILURE);
             break;
 
-            default:
-                exit(EXIT_FAILURE);
+        default:
+            exit(EXIT_FAILURE);
         }
     }
 

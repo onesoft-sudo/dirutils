@@ -1,6 +1,6 @@
 /*
     dirstats.c -- show statistical information about directories.
-    
+
     Copyright (C) 2023 OSN Inc.
 
     This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,17 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>. 
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include <dirent.h>
 #include <getopt.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "utils.h" 
+#include "utils.h"
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -32,9 +32,10 @@
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE
-#endif 
+#endif
 
-typedef struct {
+typedef struct
+{
     size_t filecount;
     size_t dircount;
     size_t linkcount;
@@ -43,7 +44,8 @@ typedef struct {
     size_t dirsize;
 } dirstats_t;
 
-typedef struct {
+typedef struct
+{
     bool recursive;
     bool count_hidden_files;
     bool filesize;
@@ -51,21 +53,22 @@ typedef struct {
 } dirstats_config_t;
 
 static const struct option long_options[] = {
-    { "recursive", no_argument,       NULL, 'r' },
-    { "all",       no_argument,       NULL, 'a' },
-    { "verbose",   optional_argument, NULL, 'V' },
-    { "version",   no_argument,       NULL, 'v' },
-    { "help",      no_argument,       NULL, 'h' },
-    { "size",      no_argument,       NULL, 's' },
-    { NULL,        0,                 NULL,  0  } 
+    {"recursive", no_argument,       NULL, 'r'},
+    { "all",      no_argument,       NULL, 'a'},
+    { "verbose",  optional_argument, NULL, 'V'},
+    { "version",  no_argument,       NULL, 'v'},
+    { "help",     no_argument,       NULL, 'h'},
+    { "size",     no_argument,       NULL, 's'},
+    { NULL,       0,                 NULL, 0  }
 };
 
 static dirstats_config_t config;
 
-static ssize_t get_file_size(char *filename, bool seek_back)
+static ssize_t
+get_file_size(char *filename, bool seek_back)
 {
     size_t size;
-    
+
 #ifdef HAVE_SYS_STAT_H
     struct stat statresult;
 
@@ -79,9 +82,9 @@ static ssize_t get_file_size(char *filename, bool seek_back)
     if (fp == NULL)
         return -1;
 
-    if (fseek(fp, 0, SEEK_END) != 0) 
+    if (fseek(fp, 0, SEEK_END) != 0)
         return -1;
-     
+
     size = ftell(fp);
 
     if (seek_back)
@@ -93,7 +96,8 @@ static ssize_t get_file_size(char *filename, bool seek_back)
     return size;
 }
 
-static void usage(int status) 
+static void
+usage(int status)
 {
     fprintf(stdout, "Usage: %s [OPTION]... [DIRECTORY]\n\
 Show statistical information about the DIRECTORY. \
@@ -110,13 +114,15 @@ Options:\n\
   -v, --version              Show the program version information.\n\
 \n\
 This program is a part of dirutils v%s.\n\
-", PROGRAM_NAME, VERSION);
+",
+            PROGRAM_NAME, VERSION);
 
     if (status != 0)
         exit(status);
 }
 
-static void show_version()
+static void
+show_version()
 {
     fprintf(stdout, "%s version %s\n\
 Copyright (C) 2023 OSN Inc.\n\
@@ -124,46 +130,48 @@ This program is licensed under GNU GPL version 3 or later <https://gnu.org/licen
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\
 \n\
-Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n", PROGRAM_NAME, VERSION);
+Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n",
+            PROGRAM_NAME, VERSION);
 }
 
-static bool get_dirstats(char *dirpath, dirstats_t *destptr, 
-                            dirstats_config_t *config, char **error_path) 
+static bool
+get_dirstats(char *dirpath, dirstats_t *destptr, dirstats_config_t *config,
+             char **error_path)
 {
     *error_path = NULL;
 
     DIR *dir = opendir(dirpath);
 
-    if (dir == NULL) 
+    if (dir == NULL)
     {
         *error_path = strdup(dirpath);
         return false;
     }
 
-    size_t childcount = 0, 
-        filecount = 0, 
-        dircount = 0, 
-        linkcount = 0, 
-        hiddencount = 0;
+    size_t childcount = 0, filecount = 0, dircount = 0, linkcount = 0,
+           hiddencount = 0;
 
     size_t dirsize = 0;
-    
+
     struct dirent *dirent;
 
-    while ((dirent = readdir(dir)) != NULL) 
+    while ((dirent = readdir(dir)) != NULL)
     {
-        if (STREQ(dirent->d_name, ".") || STREQ(dirent->d_name, "..")) 
+        if (STREQ(dirent->d_name, ".") || STREQ(dirent->d_name, ".."))
             continue;
 
-        if (dirent->d_type == DT_REG && config->filesize) {
-            if (dirent->d_name[0] != '.' || (dirent->d_name[0] == '.' && 
-                config != NULL && config->count_hidden_files)) 
+        if (dirent->d_type == DT_REG && config->filesize)
+        {
+            if (dirent->d_name[0] != '.'
+                || (dirent->d_name[0] == '.' && config != NULL
+                    && config->count_hidden_files))
             {
-                char *newpath = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
-                    
-                if (newpath == NULL) 
+                char *newpath
+                    = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
+
+                if (newpath == NULL)
                     return false;
-                
+
                 strcpy(newpath, dirpath);
                 strcat(newpath, "/");
                 strcat(newpath, dirent->d_name);
@@ -172,17 +180,20 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
 
                 if (size == -1)
                 {
-                    LOG_DEBUG_1(config->verbosity, "ERROR calculating size of `%s'\n", newpath);
-                    print_error(true, false, "cannot calculate size of `%s'", newpath);
+                    LOG_DEBUG_1(config->verbosity,
+                                "ERROR calculating size of `%s'\n", newpath);
+                    print_error(true, false, "cannot calculate size of `%s'",
+                                newpath);
                     free(newpath);
                     exit(EXIT_FAILURE);
                 }
 
                 if (config->filesize)
                 {
-                    LOG_DEBUG_2(config->verbosity, "Size: %zu bytes: %s\n", size, newpath);
+                    LOG_DEBUG_2(config->verbosity, "Size: %zu bytes: %s\n",
+                                size, newpath);
                 }
-                
+
                 free(newpath);
                 dirsize += size;
             }
@@ -198,7 +209,7 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
 
         if (dirent->d_type == DT_REG)
             filecount++;
-        else if (dirent->d_type == DT_DIR) 
+        else if (dirent->d_type == DT_DIR)
         {
             dircount++;
 
@@ -206,27 +217,31 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
             {
                 dirstats_t stats;
 
-                char *newpath = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
+                char *newpath
+                    = malloc(strlen(dirpath) + strlen(dirent->d_name) + 2);
 
-                if (newpath == NULL) 
+                if (newpath == NULL)
                     return false;
-                
+
                 strcpy(newpath, dirpath);
                 strcat(newpath, "/");
                 strcat(newpath, dirent->d_name);
 
                 newpath[strlen(dirpath) + strlen(dirent->d_name) + 1] = '\0';
 
-                LOG_DEBUG_1(config->verbosity, "reading directory: %s\n", newpath);           
+                LOG_DEBUG_1(config->verbosity, "reading directory: %s\n",
+                            newpath);
 
-                if (!get_dirstats(newpath, &stats, config, error_path)) 
+                if (!get_dirstats(newpath, &stats, config, error_path))
                 {
-                    LOG_DEBUG_3(config->verbosity, "ERROR reading directory: %s\n", newpath);
+                    LOG_DEBUG_3(config->verbosity,
+                                "ERROR reading directory: %s\n", newpath);
                     free(newpath);
                     return false;
                 }
 
-                LOG_DEBUG_2(config->verbosity, "successfully read directory: %s\n", newpath);           
+                LOG_DEBUG_2(config->verbosity,
+                            "successfully read directory: %s\n", newpath);
 
                 free(newpath);
 
@@ -234,7 +249,8 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
                 childcount += stats.childcount;
                 dircount += stats.dircount;
                 linkcount += stats.linkcount;
-                hiddencount += dirent->d_name[0] == '.' ? stats.childcount : stats.hiddencount;
+                hiddencount += dirent->d_name[0] == '.' ? stats.childcount
+                                                        : stats.hiddencount;
                 dirsize += stats.dirsize;
             }
         }
@@ -256,58 +272,60 @@ static bool get_dirstats(char *dirpath, dirstats_t *destptr,
     return true;
 }
 
-typedef struct {
+typedef struct
+{
     double value;
     char unit;
 } format_size_t;
 
-static format_size_t format_size(size_t size)
+static format_size_t
+format_size(size_t size)
 {
     format_size_t format;
     double tmpsize = 0.0 + size;
 
-    if (tmpsize < 1024) 
+    if (tmpsize < 1024)
     {
         format.unit = 'B';
     }
-    else 
+    else
     {
         tmpsize /= 1024;
 
-        if (tmpsize < 1024) 
+        if (tmpsize < 1024)
         {
             format.unit = 'K';
         }
-        else 
+        else
         {
             tmpsize /= 1024;
-            
-            if (tmpsize < 1024) 
+
+            if (tmpsize < 1024)
             {
                 format.unit = 'M';
             }
-            else 
+            else
             {
                 tmpsize /= 1024;
-            
-                if (tmpsize < 1024) 
+
+                if (tmpsize < 1024)
                 {
                     format.unit = 'M';
                 }
-                else 
+                else
                 {
                     tmpsize /= 1024;
-                
-                    if (tmpsize < 1024) 
+
+                    if (tmpsize < 1024)
                     {
                         format.unit = 'G';
                     }
-                    else 
+                    else
                     {
                         tmpsize /= 1024;
                         format.unit = 'T';
                     }
-                }            
+                }
             }
         }
     }
@@ -317,34 +335,45 @@ static format_size_t format_size(size_t size)
     return format;
 }
 
-static void print_dirstats(dirstats_t *stats)
+static void
+print_dirstats(dirstats_t *stats)
 {
     format_size_t format = format_size(stats->dirsize);
 
     printf(
-        COLOR("32", "%zu") " file%s, " 
-        COLOR("33", "%zu") " director%s, " 
-        COLOR("34", "%zu") " link%s and " 
-        COLOR("36", "%zu") " total.", stats->filecount, stats->filecount != 1 ? "s" : "",  
-        stats->dircount, stats->dircount != 1 ? "ies" : "y", stats->linkcount,
+        COLOR("32", "%zu") " file%s, " COLOR(
+            "33",
+            "%zu") " director%s, " COLOR("34",
+                                         "%zu") " link%s and " COLOR("36",
+                                                                     "%zu") " "
+                                                                            "t"
+                                                                            "o"
+                                                                            "t"
+                                                                            "a"
+                                                                            "l"
+                                                                            ".",
+        stats->filecount, stats->filecount != 1 ? "s" : "", stats->dircount,
+        stats->dircount != 1 ? "ies" : "y", stats->linkcount,
         stats->linkcount != 1 ? "s" : "", stats->childcount);
 
     if (config.filesize)
         printf(" Calculated size is %.1lf%c.", format.value, format.unit);
 
-    if (config.count_hidden_files) 
-        printf(" Counting " COLOR("1", "%zu") " hidden files.", stats->hiddencount);
-    
+    if (config.count_hidden_files)
+        printf(" Counting " COLOR("1", "%zu") " hidden files.",
+               stats->hiddencount);
+
     printf("\n");
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     set_program_name(argv[0]);
 
     config.verbosity = 0;
-    
-    while (true) 
+
+    while (true)
     {
         int option_index;
         int c = getopt_long(argc, argv, "hraVsv", long_options, &option_index);
@@ -354,41 +383,45 @@ int main(int argc, char **argv)
 
         switch (c)
         {
-            case 'h':
-                usage(0);
-                exit(0);
+        case 'h':
+            usage(0);
+            exit(0);
 
-            case 'v':
-                show_version();
-                exit(0);
+        case 'v':
+            show_version();
+            exit(0);
 
-            case 'r':
-                config.recursive = true;
+        case 'r':
+            config.recursive = true;
             break;
 
-            case 'a':
-                config.count_hidden_files = true;
+        case 'a':
+            config.count_hidden_files = true;
             break;
 
-            case 's':
-                config.filesize = true;
+        case 's':
+            config.filesize = true;
             break;
 
-            case 'V':
-                config.verbosity = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
+        case 'V':
+            config.verbosity
+                = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
 
-                if (config.verbosity < 0 || config.verbosity > 3) {
-                    print_error(false, true, "invalid verbosity level provided");
-                }
+            if (config.verbosity < 0 || config.verbosity > 3)
+            {
+                print_error(false, true, "invalid verbosity level provided");
+            }
 
-                printf("WARNING: verbose mode was enabled (level %d)\n", config.verbosity);
+            printf("WARNING: verbose mode was enabled (level %d)\n",
+                   config.verbosity);
             break;
 
-            case '?':
-                printf("Run `%s --help' for more detailed information.\n", PROGRAM_NAME);
-                exit(-1);
+        case '?':
+            printf("Run `%s --help' for more detailed information.\n",
+                   PROGRAM_NAME);
+            exit(-1);
 
-            default:
+        default:
             break;
         }
     }
@@ -406,11 +439,12 @@ int main(int argc, char **argv)
         break;
     }
 
-    LOG_DEBUG_1(config.verbosity, "reading directory: %s\n", dirpath);           
+    LOG_DEBUG_1(config.verbosity, "reading directory: %s\n", dirpath);
 
     if (!get_dirstats(dirpath, &stats, &config, &error_path))
     {
-        LOG_DEBUG_3(config.verbosity, "ERROR reading directory: %s\n", dirpath); 
+        LOG_DEBUG_3(config.verbosity, "ERROR reading directory: %s\n",
+                    dirpath);
         print_error(true, false, "cannot open `%s'", error_path);
 
         if (allocated)
@@ -418,11 +452,12 @@ int main(int argc, char **argv)
 
         if (error_path != NULL)
             free(error_path);
-        
+
         exit(EXIT_FAILURE);
     }
 
-    LOG_DEBUG_2(config.verbosity, "successfully read directory: %s\n", dirpath); 
+    LOG_DEBUG_2(config.verbosity, "successfully read directory: %s\n",
+                dirpath);
 
     if (allocated)
         free(dirpath);

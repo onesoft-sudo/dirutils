@@ -20,17 +20,22 @@
 #ifndef __DIRMAP_H__
 #define __DIRMAP_H__
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-#define DIRMAP_INIT { .entries = NULL, .size = 0 }
+#define DIRMAP_INIT                                                           \
+    {                                                                         \
+        .entries = NULL, .size = 0                                            \
+    }
 
-typedef struct {
+typedef struct
+{
     char *dirpath;
     int wd;
 } dirmap_entry_t;
 
-typedef struct {
+typedef struct
+{
     dirmap_entry_t *entries;
     size_t size;
     size_t max_dirpath_len;
