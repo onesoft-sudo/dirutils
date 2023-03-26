@@ -217,12 +217,16 @@ static void dirwatch_init(char *dirpath)
     if (config.fd == -1)
         print_error(true, true, "cannot initialize inotify");
 
+    LOG_DEBUG_2(config.verbosity, "Attempting to watch directory: %s\n", config.dirpath);
+
     /* Watch for changes in this directory. Only notify for the given events
         in the mask parameter. */
     config.wd = inotify_add_watch(config.fd, config.dirpath, config.mask);
 
     if (config.wd == -1)
         print_error(true, true, "%s: cannot watch directory", config.dirpath);
+
+    LOG_DEBUG_1(config.verbosity, "Watching directory: %s\n", config.dirpath); 
 
     if (config.recursive)
     {
