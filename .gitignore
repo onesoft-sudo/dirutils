@@ -19,6 +19,7 @@ Makefile
 *.log
 /src/dirstats
 /src/dirwatch
+/src/dirscan
 stamp-h1
 /*.sig
 *~
