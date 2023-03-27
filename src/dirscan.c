@@ -96,7 +96,7 @@ dirscan_read_dirent(char *path, u_char type)
         DIR *dir;
         struct dirent *entry;
 
-        puts(path);
+        printf("%s/\n", path);
 
         if (!config.recursive)
             return;
