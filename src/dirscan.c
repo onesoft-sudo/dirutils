@@ -191,6 +191,45 @@ dirscan_read_dirs()
     }
 }
 
+static void
+usage(bool _exit)
+{
+    printf("Usage: %s [OPTION]... [DIRECTORY]...\n\
+Scans the given DIRECTORY or DIRECTORIES and prints the file paths in the\
+ DIRECTORY or DIRECTORIES.\n\
+\n\
+Options:\n\
+  -h, --help              Show this help and exit.\n\
+  -o, --output=<FILE>     Save the scanned file list into the FILE.\n\
+  -r, --recursive         Scan the directories recursively.\n\
+  -v, --version           Show the version information of this program.\n\
+\n\
+This program is a part of dirutils v%s.\n\
+Report bugs to: <%s>.\n\
+Dirutils home page: <%s>.\n\
+",
+           PROGRAM_NAME, VERSION, PACKAGE_BUGREPORT, PACKAGE_URL);
+
+    if (_exit)
+        exit(EXIT_SUCCESS);
+}
+
+static void
+version(bool _exit)
+{
+    printf("%s (dirutils) version %s\n\
+Copyright (C) 2023 OSN Inc.\n\
+This program is licensed under GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n\
+\n\
+Written by Ar Rakin <rakinar2@onesoftnet.eu.org>.\n",
+           PROGRAM_NAME, VERSION);
+
+    if (_exit)
+        exit(EXIT_SUCCESS);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -207,11 +246,11 @@ main(int argc, char **argv)
         switch (c)
         {
             case 'h':
-
+                usage(true);
                 break;
 
             case 'v':
-
+                version(true);
                 break;
 
             case 'r':
