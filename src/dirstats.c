@@ -383,46 +383,47 @@ main(int argc, char **argv)
 
         switch (c)
         {
-        case 'h':
-            usage(0);
-            exit(0);
+            case 'h':
+                usage(0);
+                exit(0);
 
-        case 'v':
-            show_version();
-            exit(0);
+            case 'v':
+                show_version();
+                exit(0);
 
-        case 'r':
-            config.recursive = true;
-            break;
+            case 'r':
+                config.recursive = true;
+                break;
 
-        case 'a':
-            config.count_hidden_files = true;
-            break;
+            case 'a':
+                config.count_hidden_files = true;
+                break;
 
-        case 's':
-            config.filesize = true;
-            break;
+            case 's':
+                config.filesize = true;
+                break;
 
-        case 'V':
-            config.verbosity
-                = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
+            case 'V':
+                config.verbosity
+                    = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
 
-            if (config.verbosity < 0 || config.verbosity > 3)
-            {
-                print_error(false, true, "invalid verbosity level provided");
-            }
+                if (config.verbosity < 0 || config.verbosity > 3)
+                {
+                    print_error(false, true,
+                                "invalid verbosity level provided");
+                }
 
-            printf("WARNING: verbose mode was enabled (level %d)\n",
-                   config.verbosity);
-            break;
+                printf("WARNING: verbose mode was enabled (level %d)\n",
+                       config.verbosity);
+                break;
 
-        case '?':
-            printf("Run `%s --help' for more detailed information.\n",
-                   PROGRAM_NAME);
-            exit(-1);
+            case '?':
+                printf("Run `%s --help' for more detailed information.\n",
+                       PROGRAM_NAME);
+                exit(-1);
 
-        default:
-            break;
+            default:
+                break;
         }
     }
 

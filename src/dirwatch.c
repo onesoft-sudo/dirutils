@@ -550,51 +550,53 @@ main(int argc, char **argv)
 
         switch (c)
         {
-        case 'h':
-            usage(true); /* This function will call exit() itself. */
+            case 'h':
+                usage(true); /* This function will call exit() itself. */
 
-        case 'v':
-            version(true); /* This function will call exit() itself. */
+            case 'v':
+                version(true); /* This function will call exit() itself. */
 
-        case 'e':
-        {
-            uint32_t mask = dirwatch_parse_event_mask(optarg);
-
-            if (mask == 0)
-                print_error(false, true,
-                            "invalid events specified.\nRun `%s --help' "
-                            "for more detailed information.",
-                            PROGRAM_NAME);
-
-            config.mask = mask;
-        }
-        break;
-
-        case 'V':
-            config.verbosity
-                = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
-
-            if (config.verbosity < 0 || config.verbosity > 3)
+            case 'e':
             {
-                print_error(false, true, "invalid verbosity level provided");
+                uint32_t mask = dirwatch_parse_event_mask(optarg);
+
+                if (mask == 0)
+                    print_error(false, true,
+                                "invalid events specified.\nRun `%s --help' "
+                                "for more detailed information.",
+                                PROGRAM_NAME);
+
+                config.mask = mask;
             }
-
-            printf("WARNING: verbose mode was enabled (level %d)\n",
-                   config.verbosity);
             break;
 
-        case 'r':
-            config.recursive = true;
-            break;
+            case 'V':
+                config.verbosity
+                    = (verbosity_t) (optarg == NULL ? 1 : atoi(optarg));
 
-        case '?':
-            fprintf(stderr, "Run `%s --help' for more detailed information.\n",
-                    PROGRAM_NAME);
-            exit(EXIT_FAILURE);
-            break;
+                if (config.verbosity < 0 || config.verbosity > 3)
+                {
+                    print_error(false, true,
+                                "invalid verbosity level provided");
+                }
 
-        default:
-            exit(EXIT_FAILURE);
+                printf("WARNING: verbose mode was enabled (level %d)\n",
+                       config.verbosity);
+                break;
+
+            case 'r':
+                config.recursive = true;
+                break;
+
+            case '?':
+                fprintf(stderr,
+                        "Run `%s --help' for more detailed information.\n",
+                        PROGRAM_NAME);
+                exit(EXIT_FAILURE);
+                break;
+
+            default:
+                exit(EXIT_FAILURE);
         }
     }
 
