@@ -1,4 +1,10 @@
+2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	style: reformat code
+
 2023-03-26  Ar Rakin  <rakinar2@onesoftnet.eu.org>
+
+	chore: update changelog
 
 	chore: add .clang-format file
 
