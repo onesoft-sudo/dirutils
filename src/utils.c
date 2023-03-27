@@ -55,3 +55,25 @@ print_error(bool str_error, bool _exit, const char *fmt, ...)
     if (_exit)
         exit(EXIT_FAILURE);
 }
+
+void *
+xmalloc(size_t size)
+{
+    void *ptr = malloc(size);
+
+    if (!ptr)
+        exit(EXIT_FAILURE);
+
+    return ptr;
+}
+
+void *
+xrealloc(void *prevptr, size_t size)
+{
+    void *ptr = realloc(prevptr, size);
+
+    if (!ptr)
+        exit(EXIT_FAILURE);
+
+    return ptr;
+}

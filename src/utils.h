@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifndef VERSION
 #define VERSION "0.0.1"
@@ -70,5 +71,7 @@ extern char *PROGRAM_NAME;
 
 void set_program_name(char *name);
 void print_error(bool str_error, bool _exit, const char *fmt, ...);
+void *xmalloc(size_t size);
+void *xrealloc(void *prevptr, size_t size);
 
 #endif
