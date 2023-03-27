@@ -45,7 +45,7 @@ static struct option const long_options[] = {
 
 config_t config = { NULL, 0, false };
 
-static void
+__attribute__((__nonnull__)) static void
 dirscan_set_dirpath(int argc, char **argv)
 {
     for (int i = optind; i < argc; i++)
@@ -75,7 +75,7 @@ dirscan_cleanup()
     free(config.dirpaths);
 }
 
-static void
+__attribute__((__nonnull__)) static void
 dirscan_init(int argc, char **argv)
 {
     if (optind < argc)
@@ -88,7 +88,7 @@ dirscan_init(int argc, char **argv)
     }
 }
 
-static void
+__attribute__((__nonnull__)) static void
 dirscan_read_dirent(char *path, u_char type)
 {
     if (type == DT_DIR)
