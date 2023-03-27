@@ -114,8 +114,10 @@ Options:\n\
   -v, --version              Show the program version information.\n\
 \n\
 This program is a part of dirutils v%s.\n\
+Report bugs to: <%s>.\n\
+Dirutils home page: <%s>.\n\
 ",
-            PROGRAM_NAME, VERSION);
+            PROGRAM_NAME, VERSION, PACKAGE_BUGREPORT, PACKAGE_URL);
 
     if (status != 0)
         exit(status);
@@ -124,7 +126,7 @@ This program is a part of dirutils v%s.\n\
 static void
 show_version()
 {
-    fprintf(stdout, "%s version %s\n\
+    fprintf(stdout, "%s (dirutils) version %s\n\
 Copyright (C) 2023 OSN Inc.\n\
 This program is licensed under GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n\
 This is free software: you are free to change and redistribute it.\n\
