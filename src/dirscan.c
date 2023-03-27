@@ -19,12 +19,14 @@
 
 #include <dirent.h>
 #include <getopt.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "utils.h"
 #define MAX_PATHS 128
@@ -34,16 +36,33 @@ typedef struct
     char **dirpaths;
     size_t count;
     bool recursive;
+    FILE *outbuf;
 } config_t;
 
 static struct option const long_options[] = {
-    {"help",       no_argument, NULL, 'h'},
-    { "recursive", no_argument, NULL, 'r'},
-    { "version",   no_argument, NULL, 'v'},
-    { NULL,        0,           NULL, 0  }
+    {"help",       no_argument,       NULL, 'h'},
+    { "recursive", no_argument,       NULL, 'r'},
+    { "version",   no_argument,       NULL, 'v'},
+    { "output",    required_argument, NULL, 'o'},
+    { NULL,        0,                 NULL, 0  }
 };
 
-config_t config = { NULL, 0, false };
+config_t config = { NULL, 0, false, NULL };
+
+static void
+outbuf_printf(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(config.outbuf, fmt, args);
+    va_end(args);
+}
+
+static int
+outbuf_puts(char *s)
+{
+    return fprintf(config.outbuf, "%s\n", s);
+}
 
 __attribute__((__nonnull__)) static void
 dirscan_set_dirpath(int argc, char **argv)
@@ -63,6 +82,11 @@ dirscan_set_dirpath(int argc, char **argv)
 static void
 dirscan_cleanup()
 {
+    if (fileno(config.outbuf) != fileno(stdout))
+    {
+        fclose(config.outbuf);
+    }
+
     if (config.dirpaths == NULL)
         return;
 
@@ -96,7 +120,7 @@ dirscan_read_dirent(char *path, u_char type)
         DIR *dir;
         struct dirent *entry;
 
-        printf("%s/\n", path);
+        outbuf_printf("%s/\n", path);
 
         if (!config.recursive)
             return;
@@ -129,7 +153,7 @@ dirscan_read_dirent(char *path, u_char type)
         closedir(dir);
     }
     else
-        puts(path);
+        outbuf_puts(path);
 }
 
 static void
@@ -172,10 +196,12 @@ main(int argc, char **argv)
 {
     int c, option_index;
 
+    config.outbuf = stdout;
+
     atexit(&dirscan_cleanup);
     set_program_name(argv[0]);
 
-    while ((c = getopt_long(argc, argv, "hrv", long_options, &option_index))
+    while ((c = getopt_long(argc, argv, "hrvo:", long_options, &option_index))
            != -1)
     {
         switch (c)
@@ -191,6 +217,37 @@ main(int argc, char **argv)
             case 'r':
                 config.recursive = true;
                 break;
+
+            case 'o':
+            {
+                if (access(optarg, F_OK) == 0)
+                {
+                    char buf[128];
+
+                    buf[1] = '\0';
+
+                    printf("This will overwrite the existing file (%s), do "
+                           "you want to continue? [Y/n] ",
+                           optarg);
+
+                    fgets(buf, sizeof buf, stdin);
+
+                    if ((buf[1] != '\n' && buf[2] != '\0')
+                        || (buf[0] != 'y' && buf[0] != 'Y'))
+                    {
+                        printf("Operation cancelled.\n");
+                        exit(EXIT_SUCCESS);
+                    }
+                }
+
+                FILE *fp = fopen(optarg, "w");
+
+                if (!fp)
+                    print_error(true, true, "Could not open file: %s", optarg);
+
+                config.outbuf = fp;
+            }
+            break;
 
             case '?':
             default:
