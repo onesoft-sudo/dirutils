@@ -1,5 +1,16 @@
 Dirutils NEWS                                    -*- outline -*-
 
+* Noteworthy changes in release 1.0.0 (2023-03-27) [stable]
+
+** New features
+  
+  a new program `dirscan` has been added, which scans over directories
+  and lists the files inside of it.
+
+** Improvements
+ 
+  updated the output of `--help` and `--version` options in every program.
+
 * Noteworthy changes in release 0.4.0 (2023-03-24) [unstable]
 
 ** New features
