@@ -1,5 +1,9 @@
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	refactor: add nonnull attribute to functions
+
+	chore: update changelog
+
 	feat: add dirscan program
 
 	chore: update changelog
