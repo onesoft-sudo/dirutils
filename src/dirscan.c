@@ -150,7 +150,7 @@ dirscan_read_dirs()
                 continue;
 
             size_t pathlen = strlen(config.dirpaths[0]);
-            char *path = xmalloc(pathlen + strlen(entry->d_name) + 1);
+            char *path = xmalloc(pathlen + strlen(entry->d_name) + 2);
 
             strcpy(path, config.dirpaths[0]);
 
