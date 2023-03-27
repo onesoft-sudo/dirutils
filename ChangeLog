@@ -1,5 +1,9 @@
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	feat: add dirscan program
+
+	chore: update changelog
+
 	feat(utils.c): add xmalloc() and xrealloc() functions
 
 	chore: update changelog
