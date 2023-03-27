@@ -1,5 +1,9 @@
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	feat: add a slash if the entry is a directory
+
+	chore: update changelog
+
 	fix(dirscan.c): corrputed memory pointer size
 
 	chore: update changelog
