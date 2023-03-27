@@ -1,5 +1,9 @@
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	refactor: update help and version option outputs
+
+	chore: update changelog
+
 	feat: add help and version option handlers
 
 	chore: update changelog
