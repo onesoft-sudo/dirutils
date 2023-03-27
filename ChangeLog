@@ -1,5 +1,9 @@
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	feat(utils.c): add xmalloc() and xrealloc() functions
+
+	chore: update changelog
+
 	style: reformat code
 
 2023-03-26  Ar Rakin  <rakinar2@onesoftnet.eu.org>
