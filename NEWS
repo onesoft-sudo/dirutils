@@ -1,5 +1,12 @@
 Dirutils NEWS                                    -*- outline -*-
 
+* Noteworthy changes in release 1.1.0 (2023-03-28) [stable]
+
+** New features
+
+  `dirscan` now supports `-l, --limit` options that can be used to limit
+  the number of files `dirscan` scans.
+
 * Noteworthy changes in release 1.0.0 (2023-03-27) [stable]
 
 ** New features

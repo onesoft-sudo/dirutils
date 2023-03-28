@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "utils.h"
+
 #define MAX_PATHS 128
 
 typedef struct
@@ -37,17 +38,27 @@ typedef struct
     size_t count;
     bool recursive;
     FILE *outbuf;
+    int limit;
+    size_t filecount;
 } config_t;
 
 static struct option const long_options[] = {
     {"help",       no_argument,       NULL, 'h'},
     { "recursive", no_argument,       NULL, 'r'},
     { "version",   no_argument,       NULL, 'v'},
+    { "limit",     required_argument, NULL, 'l'},
     { "output",    required_argument, NULL, 'o'},
-    { NULL,        0,                 NULL, 0  }
+    { NULL,        0,                 NULL, 0  },
 };
 
-config_t config = { NULL, 0, false, NULL };
+config_t config = {
+    .dirpaths = NULL,
+    .count = 0,
+    .recursive = false,
+    .outbuf = NULL,
+    .limit = 0,
+    .filecount = 0,
+};
 
 static void
 outbuf_printf(const char *fmt, ...)
@@ -115,12 +126,16 @@ dirscan_init(int argc, char **argv)
 __attribute__((__nonnull__)) static void
 dirscan_read_dirent(char *path, u_char type)
 {
+    if (config.limit > 0 && config.filecount >= config.limit)
+        return;
+
     if (type == DT_DIR)
     {
         DIR *dir;
         struct dirent *entry;
 
         outbuf_printf("%s/\n", path);
+        config.filecount++;
 
         if (!config.recursive)
             return;
@@ -153,7 +168,10 @@ dirscan_read_dirent(char *path, u_char type)
         closedir(dir);
     }
     else
+    {
         outbuf_puts(path);
+        config.filecount++;
+    }
 }
 
 static void
@@ -200,6 +218,8 @@ Scans the given DIRECTORY or DIRECTORIES and prints the file paths in the\
 \n\
 Options:\n\
   -h, --help              Show this help and exit.\n\
+  -l, --limit=<LIMIT>     Set a limit on how many files/directories the program\n\
+                           should scan.\n\
   -o, --output=<FILE>     Save the scanned file list into the FILE.\n\
   -r, --recursive         Scan the directories recursively.\n\
   -v, --version           Show the version information of this program.\n\
@@ -240,8 +260,9 @@ main(int argc, char **argv)
     atexit(&dirscan_cleanup);
     set_program_name(argv[0]);
 
-    while ((c = getopt_long(argc, argv, "hrvo:", long_options, &option_index))
-           != -1)
+    while (
+        (c = getopt_long(argc, argv, "hrvo:l:", long_options, &option_index))
+        != -1)
     {
         switch (c)
         {
@@ -257,6 +278,16 @@ main(int argc, char **argv)
                 config.recursive = true;
                 break;
 
+            case 'l':
+                config.limit = atoi(optarg);
+
+                if (config.limit < 1)
+                    print_error(false, true,
+                                "Invalid limit specified. Make sure it is a "
+                                "valid number and not less than 1.");
+
+                break;
+
             case 'o':
             {
                 if (access(optarg, F_OK) == 0)
@@ -265,7 +296,8 @@ main(int argc, char **argv)
 
                     buf[1] = '\0';
 
-                    printf("This will overwrite the existing file (%s), do "
+                    printf("This will overwrite the existing "
+                           "file (%s), do "
                            "you want to continue? [Y/n] ",
                            optarg);
 
