@@ -1,5 +1,10 @@
 2023-03-28  Ar Rakin  <rakinar2@onesoftnet.eu.org>
 
+	feat(dirscan.c): add `-l, --limit` options
+	-l or --limit can be used with dirscan to specify a limit on how many files/directories it should scan.
+
+	chore: update changelog
+
 	chore: update configure.ac
 
 2023-03-27  Ar Rakin  <rakinar2@onesoftnet.eu.org>
